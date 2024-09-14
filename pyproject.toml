@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "openeo-backend"
+version = "0.0.1"
+description = "API to access to OPENEO API"
+authors = ["VivaldoGP"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.114.2"
+uvicorn = "^0.30.6"
+openeo = "^0.31.0"
+python-dotenv = "^1.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
