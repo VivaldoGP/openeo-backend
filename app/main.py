@@ -11,6 +11,9 @@ class Cube(BaseModel):
     temporal_extent: list
     bands: list
 
+class CollectionRequets(BaseModel):
+    collection_id: str
+
 
 fields = json.loads(
     """{
@@ -42,6 +45,20 @@ app = FastAPI()
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@app.post('/message')
+async def message(request: CollectionRequets):
+    print(f"entrada: {request.collection_id}")
+    return {"message": request.collection_id}
+
+
+@app.post('/openeo/collection')
+async def get_collection(request: CollectionRequets):
+    collection_id = request.collection_id
+    conn = get_connection()
+    collection = conn.describe_collection(collection_id=collection_id)
+    return collection
 
 
 @app.post('/openeo/process')
