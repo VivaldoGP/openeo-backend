@@ -60,11 +60,16 @@ async def process_data(data: Cube):
     ts = ndvi.aggregate_spatial(geometries=fields, reducer='mean')
     result = ts.execute()
 
-    flattened_result = {
-        date: [value[0] for value in values]
-        for date, values in result.items()
+    dates = list(result.keys())
+    values_by_date = [list(map(lambda x: x[0], result[date])) for date in dates]
+
+    ndvi_cols = list(map(list, zip(*values_by_date)))
+
+    formatted_result = {
+        "dates": dates,
     }
 
-    # Devolver los resultados como JSON con listas aplanadas
-    return flattened_result
+    for i, column in enumerate(ndvi_cols, start=1):
+        formatted_result[f"ndvi_{i}"] = column
 
+    return formatted_result
