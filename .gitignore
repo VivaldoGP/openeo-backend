@@ -1,3 +1,6 @@
 .env
 app/__pycache__
 app/__pycache__/main.cpython-312.pyc
+app/routers/__pycache__
+app/utils/__pycache__
+app/fake_data.py
