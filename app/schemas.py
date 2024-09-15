@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+import geojson
 
 
 class Credentials(BaseModel):
@@ -20,3 +21,9 @@ class Feature(BaseModel):
 class FeatureCollection(BaseModel):
     type: str = "FeatureCollection"
     features: list[Feature]
+
+    def to_geojson(self):
+        
+        fc = geojson.dumps(self.model_dump())
+        return geojson.loads(fc)
+    
