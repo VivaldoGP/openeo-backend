@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from ..utils.auth import get_connection
 from app.schemas import Cube, FeatureCollection
-import geojson
+from rasterio.io import MemoryFile
 
 router = APIRouter()
 
@@ -21,14 +21,16 @@ async def get_collection(collection_id: str):
 
 @router.post("/openeo/check_aoi")
 async def check_aoi(aoi: FeatureCollection):
-    fc = geojson.dumps(aoi.model_dump())
-    print(fc)
-    return {"aoi": aoi, "geojson": geojson.loads(fc)}
+    fc = aoi.to_geojson()
+    print(type(fc))
+    if fc.is_valid:
+        return {"aoi": aoi, "geojson": fc}
+    else:
+        return {"error": "Invalid GeoJSON"} 
 
 
 @router.post("/openeo/process/timeseries")
 async def time_series(data: Cube, aoi: FeatureCollection):
-    print(aoi)
     conn = get_connection()
     datacube = conn.load_collection(
         collection_id=data.collection_id,
@@ -41,20 +43,36 @@ async def time_series(data: Cube, aoi: FeatureCollection):
     ndvi = (nir - red) / (nir + red)
 
 
-    fc = geojson.dumps(aoi.model_dump())
-    ts = ndvi.aggregate_spatial(geometries=geojson.loads(fc), reducer='mean')
+    fc = aoi.to_geojson()
+    ts = ndvi.aggregate_spatial(geometries=fc, reducer='mean')
     result = ts.execute()
 
-    dates = list(result.keys())
-    values_by_date = [list(map(lambda x: x[0], result[date])) for date in dates]
+    time_series_data = []
+    for date, value in result.items():
+        ndvi_values = [v[0] for v in value]
+        time_series_data.append({
+            "date": date,
+            "ndvi": ndvi_values
+        })
 
-    ndvi_cols = list(map(list, zip(*values_by_date)))
+    return {"time_series": time_series_data}
 
-    formatted_result = {
-        "dates": dates,
-    }
 
-    for i, column in enumerate(ndvi_cols, start=1):
-        formatted_result[f"ndvi_{i}"] = column
 
-    return formatted_result
+@router.post("/openeo/process/image")
+async def process_image(data: Cube, aoi: FeatureCollection):
+    conn = get_connection()
+    datacube = conn.load_collection(
+        collection_id=data.collection_id,
+        temporal_extent=data.temporal_extent,
+        bands=data.bands
+    )
+
+    fc = aoi.to_geojson()
+    clipped_cube = datacube.filter_spatial(geometries=fc)
+    
+    with MemoryFile(clipped_cube.download()) as memfile:
+        with memfile.open() as dataset:
+            
+            print(type(dataset), dataset.shape, dataset.count, dataset.bounds, dataset.crs)
+            return {"data": dataset.read(1).tolist()}
