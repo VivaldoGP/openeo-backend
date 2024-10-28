@@ -76,3 +76,15 @@ async def process_image(data: Cube, aoi: FeatureCollection):
             
             print(type(dataset), dataset.shape, dataset.count, dataset.bounds, dataset.crs)
             return {"data": dataset.read(1).tolist()}
+        
+
+@router.post("/openeo/uploadFile")
+async def uploadFile(data: dict):
+    print(data)
+    return {'mensaje': data}
+
+
+@router.post("/openeo/timeSeries")
+async def timeSeries(data: dict):
+    print(data['geojson'])
+    return {'mensaje': 'fafa'}
