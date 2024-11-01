@@ -1,5 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 import geojson
+
+
+
+class User(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
 
 
 class Credentials(BaseModel):
@@ -10,7 +17,7 @@ class Credentials(BaseModel):
 class Cube(BaseModel):
     collection_id: str
     temporal_extent: list
-    bands: list
+    bands: list = ['B04', 'B08']
 
 
 class Feature(BaseModel):
@@ -27,3 +34,6 @@ class FeatureCollection(BaseModel):
         fc = geojson.dumps(self.model_dump())
         return geojson.loads(fc)
     
+class TimeSeriesFormDate(BaseModel):
+    cube: Cube
+    aoi: FeatureCollection
